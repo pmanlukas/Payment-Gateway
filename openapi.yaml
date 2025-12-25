@@ -1,0 +1,630 @@
+openapi: 3.0.3
+info:
+  title: MegaBank Payment Gateway API
+  description: |
+    REST API for the MegaBank Payment Gateway system.
+
+    **⚠️ WARNING**: This is demonstration software with intentional security vulnerabilities.
+    Do not use in production!
+
+    ## Known Security Issues
+    - Hardcoded API keys
+    - SQL injection vulnerabilities
+    - Returns sensitive data (CVV, passwords)
+    - No rate limiting
+    - No HTTPS enforcement
+
+    See [API.md](API.md) for detailed documentation.
+  version: 2.3.1
+  contact:
+    name: MegaBank Development Team
+    url: https://github.com/pmanlukas/Payment-Gateway
+  license:
+    name: See LICENSE file
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+  - url: http://uat-gateway.megabank.internal:8080
+    description: UAT environment
+  - url: http://prod-gateway.megabank.internal:8080
+    description: Production environment (demo only!)
+
+security:
+  - ApiKeyAuth: []
+
+tags:
+  - name: payments
+    description: Payment processing operations
+  - name: transactions
+    description: Transaction management
+  - name: customers
+    description: Customer management
+  - name: refunds
+    description: Refund operations
+  - name: system
+    description: System health and information
+
+paths:
+  /:
+    get:
+      tags:
+        - system
+      summary: Get API information
+      description: Returns basic information about the API version and status
+      operationId: getApiInfo
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiInfo'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /health:
+    get:
+      tags:
+        - system
+      summary: Health check
+      description: Check if the API is operational
+      operationId: healthCheck
+      responses:
+        '200':
+          description: System is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /payments:
+    post:
+      tags:
+        - payments
+      summary: Process a payment
+      description: |
+        Process a payment transaction.
+
+        **⚠️ Security Issues**:
+        - Accepts and stores CVV (PCI violation)
+        - Returns full card number in response
+        - No idempotency (duplicate charges possible)
+      operationId: processPayment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+            examples:
+              visa:
+                summary: Visa payment
+                value:
+                  card_number: "4111111111111111"
+                  cvv: "123"
+                  expiry: "12/25"
+                  amount: 99.99
+                  currency: "USD"
+              mastercard:
+                summary: Mastercard payment
+                value:
+                  card_number: "5555555555554444"
+                  cvv: "456"
+                  expiry: "06/26"
+                  amount: 150.00
+                  currency: "USD"
+      responses:
+        '200':
+          description: Payment processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /transactions/{transactionId}:
+    get:
+      tags:
+        - transactions
+      summary: Get transaction details
+      description: |
+        Retrieve details for a specific transaction.
+
+        **⚠️ Note**: Currently returns mock data. See issue #4.
+        **⚠️ Security**: Would return full card details including CVV!
+      operationId: getTransaction
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Transaction ID
+          example: "TXN20241225143022"
+      responses:
+        '200':
+          description: Transaction found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /transactions:
+    get:
+      tags:
+        - transactions
+      summary: Get all transactions
+      description: |
+        Retrieve a list of transactions with optional filtering.
+
+        **⚠️ SQL Injection**: The `search` parameter is vulnerable!
+      operationId: getAllTransactions
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 1000
+            minimum: 1
+            maximum: 10000
+          description: Maximum number of results
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search term (⚠️ SQL injection vulnerable!)
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionList'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /customers/{customerId}:
+    get:
+      tags:
+        - customers
+      summary: Get customer details
+      description: |
+        Retrieve customer information by ID.
+
+        **⚠️ Security Issues**:
+        - Returns SSN, full card number, and password
+        - No authorization check (anyone can view any customer)
+      operationId: getCustomer
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Customer ID
+          example: "CUST_12345"
+      responses:
+        '200':
+          description: Customer found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /customers:
+    post:
+      tags:
+        - customers
+      summary: Create customer
+      description: |
+        Create a new customer account.
+
+        **⚠️ Security**: Echoes password back in response!
+      operationId: createCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCustomerRequest'
+      responses:
+        '200':
+          description: Customer created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCustomerResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /refunds:
+    post:
+      tags:
+        - refunds
+      summary: Process refund
+      description: |
+        Refund a transaction.
+
+        **⚠️ Security**: No authorization check - anyone can refund any transaction!
+      operationId: processRefund
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefundRequest'
+      responses:
+        '200':
+          description: Refund processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /debug:
+    get:
+      tags:
+        - system
+      summary: Get debug information (⚠️ DANGEROUS)
+      description: |
+        **⚠️ CRITICAL SECURITY ISSUE**: This endpoint exposes ALL secrets!
+
+        Returns:
+        - All API keys
+        - Database credentials
+        - Processor API keys
+        - System environment variables
+
+        **This should NEVER exist in production!**
+      operationId: getDebugInfo
+      responses:
+        '200':
+          description: Debug information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebugInfo'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: |
+        API key for authentication.
+
+        Hardcoded keys (for demo):
+        - `test_key_12345`
+        - `prod_key_67890`
+        - `internal_key_admin`
+        - `backdoor_key_debug123`
+
+  schemas:
+    ApiInfo:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "MegaBank Payment Gateway API"
+        version:
+          type: string
+          example: "v1"
+        status:
+          type: string
+          example: "operational"
+        server:
+          type: string
+          example: "Mac OS X"
+        java_version:
+          type: string
+          example: "1.8.0_292"
+
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "healthy"
+        timestamp:
+          type: integer
+          format: int64
+          example: 1640438400000
+        database:
+          type: string
+          example: "connected"
+        memory_used:
+          type: integer
+          format: int64
+          example: 134217728
+        uptime:
+          type: string
+          example: "TODO"
+
+    PaymentRequest:
+      type: object
+      required:
+        - card_number
+        - cvv
+        - expiry
+        - amount
+      properties:
+        card_number:
+          type: string
+          description: Full card number (13-19 digits)
+          example: "4111111111111111"
+          minLength: 13
+          maxLength: 19
+        cvv:
+          type: string
+          description: Card verification value
+          example: "123"
+          minLength: 3
+          maxLength: 4
+        expiry:
+          type: string
+          description: Expiration date (MM/YY format)
+          example: "12/25"
+          pattern: '^\d{2}/\d{2}$'
+        amount:
+          type: number
+          format: double
+          description: Transaction amount
+          example: 99.99
+          minimum: 0.01
+        currency:
+          type: string
+          description: Currency code
+          example: "USD"
+          default: "USD"
+        merchant_id:
+          type: string
+          description: Merchant identifier
+          example: "MERCHANT_001"
+          default: "DEFAULT"
+        customer_id:
+          type: string
+          description: Customer identifier
+          example: "CUST_12345"
+          default: "ANONYMOUS"
+
+    PaymentResponse:
+      type: object
+      properties:
+        transaction_id:
+          type: string
+          example: "TXN20241225143022"
+        status:
+          type: integer
+          description: |
+            Transaction status:
+            - 0: Pending
+            - 1: Approved
+            - 2: Declined
+            - 3: Error
+            - 4: Fraud
+          example: 1
+        card_number:
+          type: string
+          description: "⚠️ Full card number (security issue!)"
+          example: "4111111111111111"
+        amount:
+          type: number
+          format: double
+          example: 99.99
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "TXN20241225143022"
+        status:
+          type: string
+          example: "fetched"
+        warning:
+          type: string
+          example: "This would return full card details in production!"
+
+    TransactionList:
+      type: object
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+        limit:
+          type: integer
+          example: 10
+        search:
+          type: string
+          example: "CUST_123"
+
+    Customer:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "CUST_12345"
+        email:
+          type: string
+          example: "customer@example.com"
+        ssn:
+          type: string
+          description: "⚠️ SSN in plain text (security issue!)"
+          example: "123-45-6789"
+        card_number:
+          type: string
+          description: "⚠️ Full card number (security issue!)"
+          example: "4111111111111111"
+        password:
+          type: string
+          description: "⚠️ Plain text password (security issue!)"
+          example: "plain_text_password"
+
+    CreateCustomerRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "newcustomer@example.com"
+        first_name:
+          type: string
+          example: "John"
+        last_name:
+          type: string
+          example: "Doe"
+        password:
+          type: string
+          example: "secret123"
+
+    CreateCustomerResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        customer_id:
+          type: string
+          example: "CUST_1640438400000"
+        password:
+          type: string
+          description: "⚠️ Echoed password (security issue!)"
+          example: "secret123"
+
+    RefundRequest:
+      type: object
+      required:
+        - transaction_id
+      properties:
+        transaction_id:
+          type: string
+          example: "TXN20241225143022"
+        reason:
+          type: string
+          example: "Customer request"
+          default: "Customer request"
+
+    RefundResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        transaction_id:
+          type: string
+          example: "TXN20241225143022"
+
+    DebugInfo:
+      type: object
+      description: "⚠️ CRITICAL: Exposes all secrets!"
+      properties:
+        api_keys:
+          type: array
+          items:
+            type: string
+          example: ["test_key_12345", "prod_key_67890"]
+        system_properties:
+          type: string
+          example: "{ ... all system properties ... }"
+        environment:
+          type: object
+          additionalProperties: true
+          example: {"PATH": "/usr/bin", "HOME": "/home/user"}
+        statistics:
+          type: object
+          properties:
+            transactionCount:
+              type: integer
+            dbPassword:
+              type: string
+              description: "⚠️ Database password exposed!"
+            visaApiKey:
+              type: string
+              description: "⚠️ Visa API key exposed!"
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 400
+        message:
+          type: string
+          example: "Error description (may include sensitive details)"
+
+  responses:
+    BadRequestError:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: true
+            code: 400
+            message: "Invalid request parameters"
+
+    UnauthorizedError:
+      description: Invalid or missing API key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: true
+            code: 401
+            message: "Invalid API key"
+
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: true
+            code: 404
+            message: "Endpoint not found"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: true
+            code: 500
+            message: "Internal error: [stack trace may be exposed]"

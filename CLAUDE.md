@@ -16,6 +16,18 @@ MegaBank Payment Gateway is a deliberately vulnerable legacy Java application (c
 - Sensitive data logging
 - Backdoor access methods
 
+## Documentation
+
+This repository has comprehensive documentation:
+
+- **[README.md](README.md)** - Project overview, quick start, features
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Development setup, code style, contribution workflow
+- **[API.md](API.md)** - Complete REST API documentation with examples
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Deployment procedures, rollback, monitoring
+- **[.github/CI-CD.md](.github/CI-CD.md)** - CI/CD pipeline documentation
+- **[openapi.yaml](openapi.yaml)** - OpenAPI 3.0 specification
+- **[CLAUDE.md](CLAUDE.md)** - This file - Architecture and development guide
+
 ## Build & Development Commands
 
 ### Building the Project
@@ -30,8 +42,12 @@ mvn test
 mvn test -Dtest=PaymentManagerTest
 ```
 
+**See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development setup instructions.**
+
 ### Running the Application
 The application is designed to run on Tomcat (servlet container). Deploy the JAR to a servlet container.
+
+**See [DEPLOYMENT.md](DEPLOYMENT.md) for deployment procedures.**
 
 ### Database Setup
 ```bash
@@ -40,6 +56,8 @@ mysql -u root -p < src/main/resources/schema.sql
 ```
 
 Note: Database credentials are hardcoded in multiple locations - see application.properties, DatabaseHelper.java, and PaymentManager.java.
+
+**See [CONTRIBUTING.md](CONTRIBUTING.md) for complete database setup instructions.**
 
 ## Architecture Overview
 
