@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  OWASP Dependency Check Suppression File
+
+  This file suppresses known vulnerabilities in legacy dependencies that cannot be upgraded
+  due to system constraints (Java 6 compatibility, mainframe integration, etc.)
+
+  Note: These suppressions are temporary and should be addressed in the modernization roadmap.
+-->
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+
+    <!-- Spring 3.2.18 - End of life, but cannot upgrade without major refactor -->
+    <suppress>
+        <notes><![CDATA[
+        Spring 3.2.18 is end-of-life and has multiple CVEs.
+        Cannot upgrade to Spring 4+ without rewriting XML configuration to Java config
+        and updating Hibernate integration. Requires coordination with mainframe team.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.springframework/spring\-.*@3\.2\..*$</packageUrl>
+        <cve>CVE-2016-1000027</cve>
+        <cve>CVE-2014-0054</cve>
+        <cve>CVE-2014-0225</cve>
+        <cve>CVE-2014-3625</cve>
+    </suppress>
+
+    <!-- Hibernate 3.6.10 - Legacy version required for HQL queries -->
+    <suppress>
+        <notes><![CDATA[
+        Hibernate 3.6.10 has known vulnerabilities but upgrade blocked.
+        PaymentProcessor uses deprecated HQL queries that don't work in Hibernate 4+.
+        Tracked in technical debt backlog.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.hibernate/hibernate\-.*@3\.6\..*$</packageUrl>
+    </suppress>
+
+    <!-- MySQL Connector 5.1.6 - Very old, but stable with current setup -->
+    <suppress>
+        <notes><![CDATA[
+        MySQL Connector 5.1.6 is ancient but moving to newer version requires
+        testing all database operations and may have compatibility issues with
+        MySQL 5.5 production database.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/mysql/mysql\-connector\-java@5\.1\..*$</packageUrl>
+    </suppress>
+
+    <!-- Log4j 1.2.16 - Known vulnerabilities, planned migration to Log4j2 -->
+    <suppress>
+        <notes><![CDATA[
+        Log4j 1.2.16 is end-of-life (Log4Shell not applicable to 1.x but other CVEs exist).
+        Migration to Log4j2 planned for Q2. Requires updating all logging configuration
+        and testing across all modules.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/log4j/log4j@1\.2\..*$</packageUrl>
+        <cve>CVE-2019-17571</cve>
+        <cve>CVE-2020-9488</cve>
+        <cve>CVE-2021-4104</cve>
+        <cve>CVE-2022-23302</cve>
+        <cve>CVE-2022-23305</cve>
+        <cve>CVE-2022-23307</cve>
+    </suppress>
+
+    <!-- Commons libraries - Legacy versions -->
+    <suppress>
+        <notes><![CDATA[
+        Various Apache Commons libraries are outdated.
+        Low priority for upgrade - no known exploitation in our environment.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/commons\-.*/commons\-.*@.*$</packageUrl>
+    </suppress>
+
+    <!-- JSON library - Old version from 2009 -->
+    <suppress>
+        <notes><![CDATA[
+        org.json:json version 20090211 is very old.
+        Used only in REST API. Migration to Jackson planned with Spring upgrade.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.json/json@20090211$</packageUrl>
+    </suppress>
+
+</suppressions>

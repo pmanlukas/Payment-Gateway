@@ -1,0 +1,40 @@
+# Dependabot configuration
+# Note: Most dependencies are pinned to legacy versions and cannot be upgraded
+# without extensive refactoring and coordination with the mainframe team
+
+version: 2
+updates:
+  # Maven dependencies
+  - package-ecosystem: "maven"
+    directory: "/"
+    schedule:
+      interval: "monthly"  # Check monthly, but upgrades are usually blocked
+    open-pull-requests-limit: 3
+    reviewers:
+      - "megabank/security-team"
+    labels:
+      - "dependencies"
+      - "security"
+    # Ignore major version updates for legacy components
+    ignore:
+      - dependency-name: "org.springframework:*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "org.hibernate:*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "mysql:mysql-connector-java"
+        update-types: ["version-update:semver-major"]
+    commit-message:
+      prefix: "chore(deps)"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "megabank/devops-team"
+    labels:
+      - "ci/cd"
+      - "dependencies"
+    commit-message:
+      prefix: "ci"

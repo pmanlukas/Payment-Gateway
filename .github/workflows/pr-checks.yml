@@ -1,0 +1,238 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  pr-validation:
+    name: PR Validation
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for proper diff
+
+    - name: Validate PR title
+      uses: amannn/action-semantic-pull-request@v5
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        types: |
+          fix
+          feat
+          docs
+          style
+          refactor
+          perf
+          test
+          build
+          ci
+          chore
+          security
+        requireScope: false
+      continue-on-error: true  # Don't block legacy PRs
+
+    - name: Check for large files
+      run: |
+        echo "Checking for accidentally committed large files..."
+        find . -type f -size +5M -not -path "./.git/*" -exec ls -lh {} \; || echo "No large files found"
+
+    - name: Check for sensitive file patterns
+      run: |
+        echo "Checking for sensitive files..."
+        SENSITIVE_FILES=$(git diff --name-only origin/main...HEAD | grep -E '\.env$|\.key$|\.pem$|credentials\.json|secrets\.' || true)
+        if [ -n "$SENSITIVE_FILES" ]; then
+          echo "⚠️  WARNING: Potential sensitive files detected:"
+          echo "$SENSITIVE_FILES"
+          echo "Please review these files before merging!"
+        else
+          echo "✓ No obvious sensitive files detected"
+        fi
+
+    - name: Check for new hardcoded secrets
+      run: |
+        echo "Checking for new hardcoded secrets in this PR..."
+
+        # Check for new passwords
+        NEW_PASSWORDS=$(git diff origin/main...HEAD | grep -E '^\+.*password.*=.*".*"' || true)
+        if [ -n "$NEW_PASSWORDS" ]; then
+          echo "⚠️  New hardcoded passwords found:"
+          echo "$NEW_PASSWORDS"
+        fi
+
+        # Check for new API keys
+        NEW_KEYS=$(git diff origin/main...HEAD | grep -E '^\+.*(api_key|apiKey|API_KEY).*=.*".*"' || true)
+        if [ -n "$NEW_KEYS" ]; then
+          echo "⚠️  New hardcoded API keys found:"
+          echo "$NEW_KEYS"
+        fi
+
+    - name: Count new SQL injection risks
+      run: |
+        echo "Checking for new SQL injection vulnerabilities..."
+        NEW_CONCAT=$(git diff origin/main...HEAD | grep -E '^\+.*"SELECT.*\+|"INSERT.*\+|"UPDATE.*\+|"DELETE.*\+' || true)
+        if [ -n "$NEW_CONCAT" ]; then
+          echo "⚠️  New SQL string concatenation detected (potential SQL injection):"
+          echo "$NEW_CONCAT"
+          echo ""
+          echo "Consider using PreparedStatement instead!"
+        else
+          echo "✓ No new SQL injection risks detected"
+        fi
+
+    - name: Check for CVV storage violations
+      run: |
+        echo "Checking for new CVV storage violations..."
+        NEW_CVV=$(git diff origin/main...HEAD | grep -E '^\+.*(\.cvv|setCvv|getCvv|cvv.*=)' || true)
+        if [ -n "$NEW_CVV" ]; then
+          echo "⚠️  New CVV storage detected (PCI-DSS violation):"
+          echo "$NEW_CVV"
+          echo ""
+          echo "This violates PCI-DSS requirement 3.2. CVV must NOT be stored!"
+        else
+          echo "✓ No new CVV storage violations detected"
+        fi
+
+  changed-files-report:
+    name: Changed Files Report
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Get changed files
+      id: changed-files
+      uses: tj-actions/changed-files@v41
+
+    - name: Generate impact report
+      run: |
+        echo "## Files Changed in this PR" > changes-report.md
+        echo "" >> changes-report.md
+
+        # Core payment processing
+        CORE_FILES=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | tr ' ' '\n' | grep -E 'PaymentManager|Transaction\.java|RestApiController' || true)
+        if [ -n "$CORE_FILES" ]; then
+          echo "### ⚠️  Core Payment Processing Files" >> changes-report.md
+          echo "These changes affect critical payment processing logic:" >> changes-report.md
+          echo '```' >> changes-report.md
+          echo "$CORE_FILES" >> changes-report.md
+          echo '```' >> changes-report.md
+          echo "" >> changes-report.md
+          echo "**Impact**: HIGH - Requires thorough testing" >> changes-report.md
+          echo "" >> changes-report.md
+        fi
+
+        # Database layer
+        DB_FILES=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | tr ' ' '\n' | grep -E 'DatabaseHelper|schema\.sql|dao/' || true)
+        if [ -n "$DB_FILES" ]; then
+          echo "### 🗄️  Database Layer Files" >> changes-report.md
+          echo '```' >> changes-report.md
+          echo "$DB_FILES" >> changes-report.md
+          echo '```' >> changes-report.md
+          echo "" >> changes-report.md
+          echo "**Impact**: MEDIUM - Coordinate with DBA team" >> changes-report.md
+          echo "" >> changes-report.md
+        fi
+
+        # Legacy integration
+        LEGACY_FILES=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | tr ' ' '\n' | grep -E 'LegacyPaymentBridge|legacy/' || true)
+        if [ -n "$LEGACY_FILES" ]; then
+          echo "### 🏛️  Legacy Integration Files" >> changes-report.md
+          echo '```' >> changes-report.md
+          echo "$LEGACY_FILES" >> changes-report.md
+          echo '```' >> changes-report.md
+          echo "" >> changes-report.md
+          echo "**Impact**: CRITICAL - May break mainframe integration!" >> changes-report.md
+          echo "Coordinate with mainframe team before merging." >> changes-report.md
+          echo "" >> changes-report.md
+        fi
+
+        # Security
+        SECURITY_FILES=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | tr ' ' '\n' | grep -E 'CryptoUtils|AuthManager|security/' || true)
+        if [ -n "$SECURITY_FILES" ]; then
+          echo "### 🔒 Security Files" >> changes-report.md
+          echo '```' >> changes-report.md
+          echo "$SECURITY_FILES" >> changes-report.md
+          echo '```' >> changes-report.md
+          echo "" >> changes-report.md
+          echo "**Impact**: HIGH - Security review required" >> changes-report.md
+          echo "" >> changes-report.md
+        fi
+
+        cat changes-report.md
+
+    - name: Comment PR with change impact
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const report = fs.readFileSync('changes-report.md', 'utf8');
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: report
+          });
+
+  test-coverage:
+    name: Test Coverage Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        java-version: '8'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Check test coverage
+      run: |
+        echo "## Test Coverage Report" > coverage-report.md
+        echo "" >> coverage-report.md
+        echo "⚠️  **Current Status**: Test suite is disabled in pom.xml" >> coverage-report.md
+        echo "" >> coverage-report.md
+        echo "The surefire plugin is commented out (disabled by John in 2012)." >> coverage-report.md
+        echo "" >> coverage-report.md
+
+        # Count test files
+        TEST_COUNT=$(find src/test -name "*Test.java" 2>/dev/null | wc -l || echo "0")
+        echo "Test files found: $TEST_COUNT" >> coverage-report.md
+        echo "" >> coverage-report.md
+
+        # Count source files
+        SRC_COUNT=$(find src/main -name "*.java" 2>/dev/null | wc -l || echo "0")
+        echo "Source files: $SRC_COUNT" >> coverage-report.md
+        echo "" >> coverage-report.md
+
+        if [ "$TEST_COUNT" -gt 0 ]; then
+          echo "### Test Files:" >> coverage-report.md
+          find src/test -name "*Test.java" >> coverage-report.md || true
+        fi
+
+        cat coverage-report.md
+
+    - name: Comment on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const report = fs.readFileSync('coverage-report.md', 'utf8');
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: report
+          });
