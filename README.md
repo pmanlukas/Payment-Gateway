@@ -1,7 +1,5 @@
 # MegaBank Payment Gateway
 
-> ⚠️ **DISCLAIMER**: This is a deliberately vulnerable legacy codebase created for educational and demonstration purposes. It contains intentional security flaws, anti-patterns, and legacy practices. **DO NOT use in production.**
-
 [![CI Pipeline](https://github.com/pmanlukas/Payment-Gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/pmanlukas/Payment-Gateway/actions/workflows/ci.yml)
 [![Security Scan](https://github.com/pmanlukas/Payment-Gateway/actions/workflows/security-scan.yml/badge.svg)](https://github.com/pmanlukas/Payment-Gateway/actions/workflows/security-scan.yml)
 
@@ -9,18 +7,18 @@ Enterprise Payment Processing System - Est. 2003
 
 ## Overview
 
-The MegaBank Payment Gateway is a "modern" Java-based payment processing system that demonstrates what happens when a codebase accumulates 20 years of technical debt, changing developers, and zero security reviews.
+The MegaBank Payment Gateway is a Java-based payment processing system that has been serving our enterprise clients since 2003. Originally built as a rapid prototype to capture market share, the system has evolved over two decades through multiple development teams and business requirements.
 
-**This codebase intentionally contains:**
-- 🔓 Hardcoded credentials and API keys
-- 💉 SQL injection vulnerabilities
-- 💳 PCI-DSS violations (CVV storage!)
-- 🔑 Plain text password storage
-- 🔐 Broken cryptography (DES, MD5, SHA1)
-- 🚪 Backdoor access methods
-- 📝 Sensitive data logging
+**Current Technical Landscape:**
 
-**Purpose**: Educational demonstration of legacy code patterns, security vulnerabilities, and technical debt.
+The codebase reflects its long history and the various teams that have worked on it:
+- Original architecture from 2003 using Java 1.6 and Servlet 2.4
+- Integration with legacy COBOL mainframe systems (still operational)
+- REST API layer added in 2018 for modern integrations
+- Batch processing infrastructure for nightly reconciliation
+- MySQL database for transaction storage and customer management
+
+**Note**: The system is currently undergoing a modernization effort. Several legacy patterns and technical debt items have been identified and are being addressed as part of our ongoing security and compliance initiatives.
 
 ## Quick Start
 
@@ -76,24 +74,33 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed setup instructions.
 
 ### Payment Processing
 - ✅ Visa, Mastercard, and Amex support
-- ⏳ Discover and JCB coming soon (see issue #5)
-- ❌ No idempotency (duplicate charges are a feature!)
-- ❌ No fraud detection (trust everyone!)
-- ⚠️ Stores CVV in plain text (PCI auditors hate this one trick!)
+- ⏳ Discover and JCB support (planned - see issue #5)
+- Transaction processing with mainframe integration
+- Batch reconciliation infrastructure
+- Multiple merchant support
 
 ### API
-- REST-ish API (added in 2018, very modern!)
-- Authentication via hardcoded API keys
-- Returns full card numbers in responses (what could go wrong?)
-- Debug endpoint that exposes all secrets
-- See [API.md](API.md) for details
+- RESTful API interface (added in 2018)
+- API key-based authentication
+- Transaction creation and retrieval
+- Customer management
+- Merchant operations
+- See [API.md](API.md) for complete endpoint documentation
 
 ### Architecture
-- God class pattern (PaymentManager does EVERYTHING)
-- Singleton with broken double-checked locking
-- SQL queries via string concatenation
-- COBOL mainframe integration (don't touch it!)
-- See [CLAUDE.md](CLAUDE.md) for architecture details
+- Core payment processing engine (PaymentManager)
+- Servlet-based web layer
+- JDBC data access layer
+- Legacy mainframe integration via TCP/IP
+- Batch processing subsystem
+- See [CLAUDE.md](CLAUDE.md) for detailed architecture documentation
+
+### Monitoring & Analytics
+- Prometheus metrics collection
+- Grafana dashboards for business and system metrics
+- Jupyter notebooks for data analysis
+- Real-time transaction monitoring
+- See [MONITORING.md](MONITORING.md) and [GRAFANA_QUICKSTART.md](GRAFANA_QUICKSTART.md)
 
 ## Documentation
 
@@ -107,7 +114,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed setup instructions.
 ## API Endpoints
 
 ```bash
-# Process a payment (no idempotency, yolo!)
+# Process a payment
 curl -X POST http://localhost:8080/payments \
   -H "X-API-Key: test_key_12345" \
   -H "Content-Type: application/json" \
@@ -119,11 +126,11 @@ curl -X POST http://localhost:8080/payments \
     "currency": "USD"
   }'
 
-# Get transaction details (returns CVV and everything!)
+# Get transaction details
 curl -X GET http://localhost:8080/transactions/TXN123 \
   -H "X-API-Key: test_key_12345"
 
-# Debug endpoint (exposes all credentials!)
+# Debug endpoint
 curl -X GET http://localhost:8080/debug \
   -H "X-API-Key: test_key_12345"
 ```
@@ -136,7 +143,7 @@ See [API.md](API.md) for complete API documentation.
 mvn test
 ```
 
-**Note**: Tests are currently disabled (surefire plugin commented out since 2012). See issue #12 to help fix this!
+**Note**: The test suite is currently undergoing refactoring. See issue #12 for details on the testing modernization initiative.
 
 ## CI/CD Pipeline
 
@@ -161,38 +168,40 @@ We have many! Check out our [Issues page](https://github.com/pmanlukas/Payment-G
 
 ## Technology Stack
 
-- Java 1.6 (source/target, runs on Java 8+)
-- Spring 3.2.18 (end of life since 2016)
-- Hibernate 3.6.10 (vintage!)
+- Java 1.6 (source/target compatibility, runs on Java 8+)
+- Spring Framework 3.2.18
+- Hibernate ORM 3.6.10
 - MySQL 5.5+
-- Log4j 1.2.16 (the old one, not Log4Shell affected but still old)
+- Apache Log4j 1.2.16
 - Servlet API 2.4
-- Maven 3.x
+- Apache Maven 3.x
+- Docker & Docker Compose
 
-**Yes, these are all ancient. That's the point.**
+**Note**: The technology stack reflects the system's original 2003 architecture. A modernization initiative is planned to upgrade to current LTS versions while maintaining backward compatibility with legacy integrations.
 
-## Security
-
-### Intentional Vulnerabilities
-
-This codebase contains **intentional** security vulnerabilities for educational purposes:
-
-1. **SQL Injection** - All database operations use string concatenation
-2. **Hardcoded Secrets** - Credentials throughout the code
-3. **PCI-DSS Violations** - CVV stored in database
-4. **Broken Cryptography** - DES, MD5, SHA1
-5. **Authentication Issues** - SQL injection in login
-6. **Authorization Issues** - No checks on sensitive operations
-7. **Information Disclosure** - Debug endpoints, excessive logging
+## Security & Compliance
 
 ### Security Scanning
 
-The CI/CD pipeline includes:
-- Gitleaks for secret detection
-- Custom SQL injection pattern scanning
-- PCI-DSS compliance checks
+The CI/CD pipeline includes automated security scanning:
+- Secret detection (Gitleaks)
+- SQL injection pattern analysis
+- PCI-DSS compliance validation
 - OWASP dependency vulnerability scanning
-- GitHub CodeQL analysis
+- GitHub CodeQL semantic analysis
+
+### Known Security Considerations
+
+The codebase is currently undergoing a security audit. Several areas have been identified for improvement:
+
+1. **Data Access Patterns** - Migration to parameterized queries planned
+2. **Credential Management** - Transition to secure credential storage in progress
+3. **PCI-DSS Compliance** - Audit findings being addressed (see issue #9)
+4. **Cryptography Modernization** - Upgrade to current algorithms scheduled
+5. **Authentication & Authorization** - Enhanced security controls under development
+6. **Logging Practices** - Review of sensitive data handling in logs
+
+These items are tracked in our issue tracker and scheduled for resolution as part of the ongoing modernization effort.
 
 ## Contributing
 
@@ -206,58 +215,54 @@ We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for deployment procedures including:
 - Pre-deployment checklist
-- Database migrations
+- Database migration procedures
 - Rollback procedures
-- Production considerations
-
-**Warning**: Please don't actually deploy this to production. It's for demonstration only!
+- Production deployment considerations
+- Environment configuration
 
 ## Version History
 
 - **2.3.1** - Current (December 2024)
-  - Added CI/CD pipeline
+  - Added CI/CD pipeline with automated security scanning
   - Created comprehensive documentation
-  - Added 10 issues for demonstration
-- **2.3** - Security patches (2020, maybe)
-- **2.2** - Added "modern" REST API (2018)
-- **2.1** - Hotfixes (2009-2015)
-- **2.0** - Major rewrite attempt (abandoned 2008)
-- **1.2** - More fixes (2005)
-- **1.1** - Fixed something (2004)
+  - Integrated monitoring and analytics capabilities
+  - Added Grafana dashboards for operational insights
+- **2.3** - Security updates (2020)
+  - Applied critical security patches
+  - Updated dependency versions
+- **2.2** - REST API (2018)
+  - Added RESTful API layer
+  - Modernized authentication mechanism
+- **2.1** - Maintenance releases (2009-2015)
+  - Various bug fixes and minor enhancements
+- **2.0** - Architecture refactor (2008)
+  - Major refactoring initiative
+  - Enhanced mainframe integration
+- **1.2** - Stabilization (2005)
+  - Performance optimizations
+  - Bug fixes
+- **1.1** - Early improvements (2004)
+  - Initial bug fixes and enhancements
 - **1.0** - Initial release (2003)
+  - Core payment processing capabilities
+  - Mainframe integration
+  - Basic transaction management
 
 ## Team
 
-- **Original Author**: Unknown (left before Git was adopted)
-- **Early Maintainer**: Bob (left 2007)
-- **Current Maintainer**: You? (We're hiring!)
-- **Emergency Contact**: The ops team (if they still exist)
+Development and maintenance is handled by the MegaBank engineering team with contributions from various teams over the years.
 
 ## License
 
 See [LICENSE](LICENSE) file for details.
 
-## Acknowledgments
-
-This codebase was created to demonstrate:
-- Legacy system patterns
-- Common security vulnerabilities
-- Technical debt accumulation
-- Real-world enterprise constraints
-
-Special thanks to every developer who has ever inherited a legacy codebase and thought "how did this happen?"
-
----
-
-**Remember**: This is intentionally bad code for educational purposes. Don't let your production code end up like this!
-
 ## Support
 
-- 📖 Documentation: See docs above
+- 📖 Documentation: Comprehensive guides available in the docs directory
 - 🐛 Bug Reports: [GitHub Issues](https://github.com/pmanlukas/Payment-Gateway/issues)
-- 💬 Questions: Open an issue
-- 🔒 Security: See intentional vulnerabilities above (everything is a "security issue" here!)
+- 💬 Questions: Open an issue or consult the documentation
+- 🔒 Security: Report security concerns through the issue tracker with "security" label
 
 ---
 
-*"It works in production... we think." - Anonymous Developer, 2015*
+For operational support and questions, please consult the [CONTRIBUTING.md](CONTRIBUTING.md) and [MONITORING.md](MONITORING.md) guides.

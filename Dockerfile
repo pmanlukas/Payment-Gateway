@@ -49,8 +49,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
 # Labels
 LABEL maintainer="MegaBank DevOps Team" \
       version="2.3.1" \
-      description="MegaBank Payment Gateway - Legacy Payment Processing System" \
-      security.warning="This image contains intentional vulnerabilities for demonstration purposes"
+      description="MegaBank Payment Gateway - Enterprise Payment Processing System"
 
 # Start Tomcat
 CMD ["catalina.sh", "run"]
