@@ -9,7 +9,8 @@
 # 3. Displays access information
 #
 # Usage:
-#   ./analytics/scripts/setup-analytics.sh
+#   ./analytics/scripts/setup-analytics.sh           # Build and start
+#   ./analytics/scripts/setup-analytics.sh --prepare # Only download/build
 ###############################################################################
 
 set -e  # Exit on error
@@ -21,8 +22,18 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Parse arguments
+PREPARE_ONLY=false
+if [[ "$1" == "--prepare" ]] || [[ "$1" == "-p" ]]; then
+    PREPARE_ONLY=true
+fi
+
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════════════${NC}"
-echo -e "${BLUE}   MegaBank Payment Gateway - Analytics Setup${NC}"
+if [ "$PREPARE_ONLY" = true ]; then
+    echo -e "${BLUE}   MegaBank - Prepare Analytics Dependencies${NC}"
+else
+    echo -e "${BLUE}   MegaBank Payment Gateway - Analytics Setup${NC}"
+fi
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════════════${NC}"
 
 # Check if Docker is running
@@ -40,7 +51,44 @@ cd "$PROJECT_ROOT"
 
 echo -e "${BLUE}Working directory: ${PROJECT_ROOT}${NC}"
 
-# Stop any existing containers
+# Prepare mode: Only pull and build
+if [ "$PREPARE_ONLY" = true ]; then
+    echo -e "\n${BLUE}Preparing analytics environment...${NC}"
+    echo -e "${YELLOW}This will download all images and build containers${NC}"
+    echo -e "${YELLOW}but will NOT start any services.${NC}"
+    echo ""
+
+    # Pull all images
+    echo -e "${BLUE}Step 1/2: Pulling Docker images...${NC}"
+    docker-compose pull mysql prometheus grafana 2>/dev/null || true
+
+    # Build custom images (payment-gateway and jupyter)
+    echo ""
+    echo -e "${BLUE}Step 2/2: Building custom images (includes Maven + Python deps)...${NC}"
+    docker-compose build --no-cache
+
+    echo ""
+    echo -e "${GREEN}═══════════════════════════════════════════════════════════════════════${NC}"
+    echo -e "${GREEN}✓ Analytics Preparation Complete!${NC}"
+    echo -e "${GREEN}═══════════════════════════════════════════════════════════════════════${NC}"
+    echo ""
+    echo -e "${BLUE}All dependencies downloaded and cached.${NC}"
+    echo -e "${BLUE}Next startup will be much faster!${NC}"
+    echo ""
+    echo -e "${YELLOW}What was prepared:${NC}"
+    echo -e "  ✓ MySQL 5.7 image (x86_64)"
+    echo -e "  ✓ Prometheus + Grafana images"
+    echo -e "  ✓ Jupyter scipy-notebook (native ARM64)"
+    echo -e "  ✓ Maven dependencies (Java build cached)"
+    echo -e "  ✓ Python packages (pandas, sklearn, etc.)"
+    echo ""
+    echo -e "${YELLOW}To start services:${NC}"
+    echo -e "  ${GREEN}./analytics/scripts/setup-analytics.sh${NC}"
+    echo ""
+    exit 0
+fi
+
+# Normal mode: Stop any existing containers
 echo -e "\n${YELLOW}Stopping existing containers...${NC}"
 docker-compose down 2>/dev/null || true
 

@@ -4,6 +4,10 @@
 #
 # This script sets up and starts the entire application stack using Docker
 #
+# Usage:
+#   ./quick-start.sh           # Build and start services
+#   ./quick-start.sh --prepare # Only download/build (don't start)
+#
 
 set -e  # Exit on error
 
@@ -14,8 +18,18 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
+# Parse arguments
+PREPARE_ONLY=false
+if [[ "$1" == "--prepare" ]] || [[ "$1" == "-p" ]]; then
+    PREPARE_ONLY=true
+fi
+
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}MegaBank Payment Gateway - Quick Start${NC}"
+if [ "$PREPARE_ONLY" = true ]; then
+    echo -e "${BLUE}MegaBank - Prepare Dependencies${NC}"
+else
+    echo -e "${BLUE}MegaBank Payment Gateway - Quick Start${NC}"
+fi
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
@@ -47,11 +61,50 @@ fi
 echo -e "${GREEN}✓ Docker daemon is running${NC}"
 echo ""
 
-# Stop any existing containers
-echo -e "${BLUE}Stopping any existing containers...${NC}"
-docker-compose down 2>/dev/null || true
+# Stop any existing containers (unless preparing)
+if [ "$PREPARE_ONLY" = false ]; then
+    echo -e "${BLUE}Stopping any existing containers...${NC}"
+    docker-compose down 2>/dev/null || true
+fi
 
-# Build and start services
+# Prepare mode: Only pull and build
+if [ "$PREPARE_ONLY" = true ]; then
+    echo -e "${BLUE}Preparing environment (download and build)...${NC}"
+    echo -e "${YELLOW}This will download all images and build containers${NC}"
+    echo -e "${YELLOW}but will NOT start any services.${NC}"
+    echo ""
+
+    # Pull all images
+    echo -e "${BLUE}Step 1/2: Pulling Docker images...${NC}"
+    docker-compose pull mysql prometheus grafana 2>/dev/null || true
+
+    # Build custom images (payment-gateway and jupyter)
+    echo ""
+    echo -e "${BLUE}Step 2/2: Building custom images...${NC}"
+    echo -e "${YELLOW}This downloads Maven dependencies and Python packages...${NC}"
+    docker-compose build --no-cache
+
+    echo ""
+    echo -e "${GREEN}========================================${NC}"
+    echo -e "${GREEN}Preparation Complete!${NC}"
+    echo -e "${GREEN}========================================${NC}"
+    echo ""
+    echo -e "${BLUE}All dependencies downloaded and images built.${NC}"
+    echo -e "${BLUE}Next time you run './quick-start.sh' it will be much faster!${NC}"
+    echo ""
+    echo -e "${YELLOW}What was downloaded:${NC}"
+    echo -e "  ✓ MySQL 5.7 image"
+    echo -e "  ✓ Prometheus image"
+    echo -e "  ✓ Grafana image"
+    echo -e "  ✓ Jupyter scipy-notebook image"
+    echo -e "  ✓ Maven dependencies (cached)"
+    echo -e "  ✓ Python packages (cached)"
+    echo -e "  ✓ Payment Gateway built"
+    echo ""
+    exit 0
+fi
+
+# Normal mode: Build and start services
 echo -e "${BLUE}Building and starting services...${NC}"
 echo -e "${YELLOW}This may take a few minutes on first run...${NC}"
 echo ""
