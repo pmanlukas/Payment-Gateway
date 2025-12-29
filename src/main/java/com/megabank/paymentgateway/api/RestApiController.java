@@ -67,9 +67,13 @@ public class RestApiController extends HttpServlet {
                 getTransaction(txnId, response);
             } else if (path.equals("/transactions")) {
                 getAllTransactions(request, response);
+            } else if (path.equals("/customers")) {
+                getAllCustomers(request, response);
             } else if (path.startsWith("/customers/")) {
                 String customerId = path.substring("/customers/".length());
                 getCustomer(customerId, response);
+            } else if (path.equals("/merchants")) {
+                getAllMerchants(request, response);
             } else if (path.equals("/debug")) {
                 // Debug endpoint in production!
                 getDebugInfo(response);
@@ -174,12 +178,64 @@ public class RestApiController extends HttpServlet {
         String search = request.getParameter("search");
         System.out.println("Search query: " + search);  // Logged!
 
-        JSONObject json = new JSONObject();
-        json.put("transactions", new JSONArray());
-        json.put("limit", limit);
-        json.put("search", search);
+        // Query database directly - returns full card numbers and CVV!
+        String sql = "SELECT id, card_number, amount, currency, status, merchant_id, customer_id, " +
+                     "customer_email, ip_address, risk_score, created_date, processor_response, " +
+                     "cardholder_name, billing_address FROM transactions ORDER BY created_date DESC LIMIT " + limit;
 
-        response.getWriter().write(json.toString());
+        java.sql.ResultSet rs = com.megabank.paymentgateway.dao.DatabaseHelper.executeQuery(sql);
+
+        JSONArray transactions = new JSONArray();
+        while (rs.next()) {
+            JSONObject txn = new JSONObject();
+            txn.put("id", rs.getString("id"));
+            txn.put("card_number", rs.getString("card_number"));  // Full card number!
+            txn.put("amount", rs.getDouble("amount"));
+            txn.put("currency", rs.getString("currency"));
+            txn.put("status", rs.getInt("status"));
+            txn.put("merchant_id", rs.getString("merchant_id"));
+            txn.put("customer_id", rs.getString("customer_id"));
+            txn.put("customer_email", rs.getString("customer_email"));
+            txn.put("ip_address", rs.getString("ip_address"));
+            txn.put("risk_score", rs.getString("risk_score"));  // VARCHAR, not INT!
+            txn.put("created_date", rs.getTimestamp("created_date").toString());
+            txn.put("processor_response", rs.getString("processor_response"));
+            txn.put("cardholder_name", rs.getString("cardholder_name"));
+            txn.put("billing_address", rs.getString("billing_address"));
+            transactions.put(txn);
+        }
+
+        response.getWriter().write(transactions.toString());
+    }
+
+    private void getAllCustomers(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        // Returns ALL customers with sensitive data - no pagination!
+        String limitStr = request.getParameter("limit");
+        int limit = 100;  // Default limit
+        if (limitStr != null) {
+            limit = Integer.parseInt(limitStr);
+        }
+
+        // Query database directly - SQL injection vulnerability!
+        String sql = "SELECT customer_id, first_name, last_name, email, phone, is_vip, risk_level, credit_limit FROM customers LIMIT " + limit;
+
+        java.sql.ResultSet rs = com.megabank.paymentgateway.dao.DatabaseHelper.executeQuery(sql);
+
+        JSONArray customers = new JSONArray();
+        while (rs.next()) {
+            JSONObject customer = new JSONObject();
+            customer.put("customer_id", rs.getString("customer_id"));
+            customer.put("first_name", rs.getString("first_name"));
+            customer.put("last_name", rs.getString("last_name"));
+            customer.put("email", rs.getString("email"));
+            customer.put("phone", rs.getString("phone"));
+            customer.put("is_vip", rs.getBoolean("is_vip"));
+            customer.put("risk_level", rs.getInt("risk_level"));
+            customer.put("credit_limit", rs.getDouble("credit_limit"));
+            customers.put(customer);
+        }
+
+        response.getWriter().write(customers.toString());
     }
 
     private void getCustomer(String customerId, HttpServletResponse response) throws Exception {
@@ -199,6 +255,33 @@ public class RestApiController extends HttpServlet {
         }
 
         response.getWriter().write(json.toString());
+    }
+
+    private void getAllMerchants(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        // Returns ALL merchants - no auth check!
+        String limitStr = request.getParameter("limit");
+        int limit = 100;
+        if (limitStr != null) {
+            limit = Integer.parseInt(limitStr);
+        }
+
+        // Direct SQL query - no category/mcc columns in schema!
+        String sql = "SELECT merchant_id, name, contact_email, fee_percentage, is_active FROM merchants LIMIT " + limit;
+
+        java.sql.ResultSet rs = com.megabank.paymentgateway.dao.DatabaseHelper.executeQuery(sql);
+
+        JSONArray merchants = new JSONArray();
+        while (rs.next()) {
+            JSONObject merchant = new JSONObject();
+            merchant.put("merchant_id", rs.getString("merchant_id"));
+            merchant.put("name", rs.getString("name"));
+            merchant.put("contact_email", rs.getString("contact_email"));
+            merchant.put("fee_percentage", rs.getDouble("fee_percentage"));
+            merchant.put("is_active", rs.getBoolean("is_active"));
+            merchants.put(merchant);
+        }
+
+        response.getWriter().write(merchants.toString());
     }
 
     private void processPayment(String body, HttpServletResponse response) throws Exception {

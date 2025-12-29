@@ -196,7 +196,7 @@ done
 # Wait for Application
 echo -n "Payment Gateway"
 for i in {1..60}; do
-    if curl -s http://localhost:8080/health &> /dev/null; then
+    if curl -s http://localhost:8080/payment-gateway/ &> /dev/null; then
         echo -e " ${GREEN}✓${NC}"
         break
     fi
@@ -212,16 +212,27 @@ echo ""
 
 # Display access information
 echo -e "${BLUE}Access URLs:${NC}"
-echo -e "  Payment Gateway API: ${GREEN}http://localhost:8080${NC}"
-echo -e "  Health Check:        ${GREEN}http://localhost:8080/health${NC}"
-echo -e "  Prometheus:          ${GREEN}http://localhost:9090${NC}"
-echo -e "  Grafana:             ${GREEN}http://localhost:3000${NC} (admin/admin123)"
-echo -e "  MySQL:               ${GREEN}localhost:3306${NC} (payment_admin/Payment123!)"
+echo ""
+echo -e "  ${YELLOW}Web UI (Browser):${NC}"
+echo -e "    ${GREEN}http://localhost:8080/payment-gateway/${NC}"
+echo -e "    ${BLUE}└─ Interactive dashboard, payment processing, and API documentation${NC}"
+echo ""
+echo -e "  ${YELLOW}API Endpoints:${NC}"
+echo -e "    ${GREEN}http://localhost:8080/payment-gateway/api/${NC}"
+echo -e "    ${BLUE}└─ Health: /api/health | Payments: /api/payments | Transactions: /api/transactions${NC}"
+echo ""
+echo -e "  ${YELLOW}Monitoring & Analytics:${NC}"
+echo -e "    Prometheus:  ${GREEN}http://localhost:9090${NC}"
+echo -e "    Grafana:     ${GREEN}http://localhost:3000${NC} ${BLUE}(admin/admin123)${NC}"
+echo -e "    Jupyter:     ${GREEN}http://localhost:8888${NC}"
+echo ""
+echo -e "  ${YELLOW}Database:${NC}"
+echo -e "    MySQL:       ${GREEN}localhost:3306${NC} ${BLUE}(payment_admin/Payment123!)${NC}"
 echo ""
 
 # Test the health endpoint
 echo -e "${BLUE}Testing health endpoint...${NC}"
-HEALTH=$(curl -s http://localhost:8080/health)
+HEALTH=$(curl -s -H "X-API-Key: test_key_12345" http://localhost:8080/payment-gateway/api/health)
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✓ Health check successful${NC}"
     echo "$HEALTH" | python -m json.tool 2>/dev/null || echo "$HEALTH"
@@ -232,14 +243,20 @@ fi
 echo ""
 echo -e "${BLUE}Quick Test Commands:${NC}"
 echo ""
-echo -e "${YELLOW}# Test health endpoint${NC}"
-echo -e "curl http://localhost:8080/health"
+echo -e "${YELLOW}# Open the Web UI (in your browser)${NC}"
+echo -e "open http://localhost:8080/payment-gateway/"
 echo ""
-echo -e "${YELLOW}# Test payment (requires API key)${NC}"
-echo -e 'curl -X POST http://localhost:8080/payments \'
-echo -e '  -H "X-API-Key: docker_test_key" \'
+echo -e "${YELLOW}# Test health endpoint (API)${NC}"
+echo -e 'curl -H "X-API-Key: test_key_12345" http://localhost:8080/payment-gateway/api/health'
+echo ""
+echo -e "${YELLOW}# Test payment (API)${NC}"
+echo -e 'curl -X POST http://localhost:8080/payment-gateway/api/payments \'
+echo -e '  -H "X-API-Key: test_key_12345" \'
 echo -e '  -H "Content-Type: application/json" \'
 echo -e '  -d '"'"'{"card_number":"4111111111111111","cvv":"123","expiry":"12/25","amount":99.99}'"'"
+echo ""
+echo -e "${YELLOW}# View all transactions (API)${NC}"
+echo -e 'curl -H "X-API-Key: test_key_12345" http://localhost:8080/payment-gateway/api/transactions'
 echo ""
 echo -e "${YELLOW}# View logs${NC}"
 echo -e "docker-compose logs -f payment-gateway"

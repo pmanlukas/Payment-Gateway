@@ -15,13 +15,15 @@ import java.io.*;
 public class DatabaseHelper {
 
     // Hardcoded database credentials - multiple environments mixed!
-    private static final String DEV_DB_URL = "jdbc:mysql://localhost:3306/payments_dev";
+    // Check environment variable for Docker support
+    private static final String DEV_DB_HOST = System.getenv("DB_HOST") != null ? System.getenv("DB_HOST") : "localhost";
+    private static final String DEV_DB_URL = "jdbc:mysql://" + DEV_DB_HOST + ":3306/payments";
     private static final String PROD_DB_URL = "jdbc:mysql://prod-db.megabank.internal:3306/payments";
     private static final String UAT_DB_URL = "jdbc:mysql://uat-db.megabank.internal:3306/payments";
 
     // Same password for all environments! Security issue!
-    private static final String DB_USER = "root";  // Using root!
-    private static final String DB_PASSWORD = "root123";
+    private static final String DB_USER = System.getenv("DB_USER") != null ? System.getenv("DB_USER") : "root";  // Using root!
+    private static final String DB_PASSWORD = System.getenv("DB_PASSWORD") != null ? System.getenv("DB_PASSWORD") : "root123";
 
     // Static connection - not thread safe!
     private static Connection connection = null;

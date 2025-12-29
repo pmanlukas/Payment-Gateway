@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MegaBank Payment Gateway - Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-university"></i>
+                <h1>MegaBank Payment Gateway</h1>
+            </div>
+            <div class="header-info">
+                <span class="version">v2.3.1</span>
+                <span class="status" id="system-status">
+                    <i class="fas fa-circle"></i> System Status
+                </span>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="dashboard">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </button>
+            <button class="nav-tab" data-tab="process-payment">
+                <i class="fas fa-credit-card"></i> Process Payment
+            </button>
+            <button class="nav-tab" data-tab="transactions">
+                <i class="fas fa-list"></i> Transactions
+            </button>
+            <button class="nav-tab" data-tab="customers">
+                <i class="fas fa-users"></i> Customers
+            </button>
+            <button class="nav-tab" data-tab="merchants">
+                <i class="fas fa-store"></i> Merchants
+            </button>
+            <button class="nav-tab" data-tab="api-docs">
+                <i class="fas fa-book"></i> API Docs
+            </button>
+            <button class="nav-tab" data-tab="monitoring">
+                <i class="fas fa-chart-line"></i> Monitoring
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content active">
+                <h2>System Dashboard</h2>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon transactions">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Total Transactions</div>
+                            <div class="stat-value" id="total-transactions">-</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon revenue">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Total Revenue</div>
+                            <div class="stat-value" id="total-revenue">-</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon approval">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Approval Rate</div>
+                            <div class="stat-value" id="approval-rate">-</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon customers">
+                            <i class="fas fa-user-friends"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Active Customers</div>
+                            <div class="stat-value" id="active-customers">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-section">
+                    <h3>Recent Transactions</h3>
+                    <div id="recent-transactions-table"></div>
+                </div>
+
+                <div class="dashboard-section">
+                    <h3>System Health</h3>
+                    <div id="system-health"></div>
+                </div>
+            </div>
+
+            <!-- Process Payment Tab -->
+            <div id="process-payment" class="tab-content">
+                <h2>Process Payment</h2>
+
+                <div class="payment-form-container">
+                    <form id="payment-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="card-number">Card Number *</label>
+                                <input type="text" id="card-number" required
+                                       placeholder="4111111111111111" maxlength="16">
+                                <small>Test cards: Visa: 4111111111111111, MC: 5555555555554444</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="cvv">CVV *</label>
+                                <input type="text" id="cvv" required
+                                       placeholder="123" maxlength="4">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="expiry">Expiry Date *</label>
+                                <input type="text" id="expiry" required
+                                       placeholder="12/25" maxlength="5">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="amount">Amount (USD) *</label>
+                                <input type="number" id="amount" required
+                                       placeholder="99.99" step="0.01" min="0.01">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="merchant-id">Merchant ID</label>
+                                <select id="merchant-id">
+                                    <option value="">Select Merchant</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="customer-id">Customer ID</label>
+                                <input type="text" id="customer-id" placeholder="CUST_001">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="api-key">API Key *</label>
+                            <input type="text" id="api-key" required
+                                   value="test_key_12345" placeholder="Your API Key">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Process Payment
+                        </button>
+                    </form>
+
+                    <div id="payment-result" class="result-box"></div>
+                </div>
+            </div>
+
+            <!-- Transactions Tab -->
+            <div id="transactions" class="tab-content">
+                <h2>Transaction History</h2>
+
+                <div class="toolbar">
+                    <div class="form-group inline">
+                        <label for="txn-api-key">API Key:</label>
+                        <input type="text" id="txn-api-key" value="test_key_12345">
+                    </div>
+                    <button class="btn btn-secondary" onclick="loadTransactions()">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
+
+                <div id="transactions-table"></div>
+            </div>
+
+            <!-- Customers Tab -->
+            <div id="customers" class="tab-content">
+                <h2>Customer Management</h2>
+
+                <div class="toolbar">
+                    <div class="form-group inline">
+                        <label for="cust-api-key">API Key:</label>
+                        <input type="text" id="cust-api-key" value="test_key_12345">
+                    </div>
+                    <button class="btn btn-secondary" onclick="loadCustomers()">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
+
+                <div id="customers-table"></div>
+            </div>
+
+            <!-- Merchants Tab -->
+            <div id="merchants" class="tab-content">
+                <h2>Merchant Directory</h2>
+
+                <div id="merchants-list"></div>
+            </div>
+
+            <!-- API Documentation Tab -->
+            <div id="api-docs" class="tab-content">
+                <h2>API Documentation</h2>
+
+                <div class="api-docs">
+                    <div class="api-section">
+                        <h3>Authentication</h3>
+                        <p>All API requests require an API key in the <code>X-API-Key</code> header.</p>
+                        <div class="code-block">
+                            <pre>X-API-Key: test_key_12345</pre>
+                        </div>
+                    </div>
+
+                    <div class="api-section">
+                        <h3>Endpoints</h3>
+
+                        <div class="endpoint">
+                            <div class="endpoint-header">
+                                <span class="method post">POST</span>
+                                <code>/api/payments</code>
+                            </div>
+                            <p>Process a new payment transaction</p>
+                            <div class="code-block">
+                                <pre>{
+  "card_number": "4111111111111111",
+  "cvv": "123",
+  "expiry": "12/25",
+  "amount": 99.99,
+  "currency": "USD",
+  "merchant_id": "MERCH_001",
+  "customer_id": "CUST_001"
+}</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint">
+                            <div class="endpoint-header">
+                                <span class="method get">GET</span>
+                                <code>/api/transactions</code>
+                            </div>
+                            <p>Retrieve all transactions</p>
+                        </div>
+
+                        <div class="endpoint">
+                            <div class="endpoint-header">
+                                <span class="method get">GET</span>
+                                <code>/api/transactions/{id}</code>
+                            </div>
+                            <p>Retrieve a specific transaction by ID</p>
+                        </div>
+
+                        <div class="endpoint">
+                            <div class="endpoint-header">
+                                <span class="method get">GET</span>
+                                <code>/api/customers</code>
+                            </div>
+                            <p>Retrieve all customers</p>
+                        </div>
+
+                        <div class="endpoint">
+                            <div class="endpoint-header">
+                                <span class="method get">GET</span>
+                                <code>/api/health</code>
+                            </div>
+                            <p>Check system health status</p>
+                        </div>
+                    </div>
+
+                    <div class="api-section">
+                        <h3>Test Card Numbers</h3>
+                        <table class="simple-table">
+                            <tr>
+                                <th>Card Type</th>
+                                <th>Card Number</th>
+                                <th>CVV</th>
+                            </tr>
+                            <tr>
+                                <td>Visa</td>
+                                <td><code>4111111111111111</code></td>
+                                <td>Any 3 digits</td>
+                            </tr>
+                            <tr>
+                                <td>Mastercard</td>
+                                <td><code>5555555555554444</code></td>
+                                <td>Any 3 digits</td>
+                            </tr>
+                            <tr>
+                                <td>Amex</td>
+                                <td><code>378282246310005</code></td>
+                                <td>Any 4 digits</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monitoring Tab -->
+            <div id="monitoring" class="tab-content">
+                <h2>System Monitoring</h2>
+
+                <div class="monitoring-links">
+                    <a href="http://localhost:3000" target="_blank" class="monitor-card grafana">
+                        <i class="fas fa-chart-area"></i>
+                        <h3>Grafana Dashboards</h3>
+                        <p>Business metrics and analytics</p>
+                        <span class="link-url">localhost:3000</span>
+                    </a>
+
+                    <a href="http://localhost:9090" target="_blank" class="monitor-card prometheus">
+                        <i class="fas fa-database"></i>
+                        <h3>Prometheus</h3>
+                        <p>Metrics and monitoring</p>
+                        <span class="link-url">localhost:9090</span>
+                    </a>
+
+                    <a href="http://localhost:8888/lab" target="_blank" class="monitor-card jupyter">
+                        <i class="fas fa-flask"></i>
+                        <h3>Jupyter Analytics</h3>
+                        <p>Data analysis notebooks</p>
+                        <span class="link-url">localhost:8888</span>
+                    </a>
+
+                    <a href="/api/health" target="_blank" class="monitor-card health">
+                        <i class="fas fa-heartbeat"></i>
+                        <h3>Health Check</h3>
+                        <p>System health endpoint</p>
+                        <span class="link-url">/api/health</span>
+                    </a>
+                </div>
+
+                <div class="dashboard-section">
+                    <h3>Quick Links</h3>
+                    <ul class="quick-links">
+                        <li><a href="API.md" target="_blank"><i class="fas fa-file-alt"></i> Full API Documentation</a></li>
+                        <li><a href="GRAFANA_QUICKSTART.md" target="_blank"><i class="fas fa-chart-line"></i> Grafana Quick Start Guide</a></li>
+                        <li><a href="MONITORING.md" target="_blank"><i class="fas fa-clipboard-check"></i> Monitoring Guide</a></li>
+                        <li><a href="https://github.com/pmanlukas/Payment-Gateway" target="_blank"><i class="fab fa-github"></i> GitHub Repository</a></li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2003-2024 MegaBank Payment Gateway | Enterprise Payment Processing System | v2.3.1</p>
+        </footer>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
