@@ -91,6 +91,30 @@ services:
       - prometheus
     restart: unless-stopped
 
+  # Jupyter Lab for Data Analytics
+  jupyter:
+    build:
+      context: ./analytics
+      dockerfile: Dockerfile.jupyter
+    container_name: megabank-jupyter
+    ports:
+      - "8888:8888"
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=payments
+      - DB_USER=payment_admin
+      - DB_PASSWORD=Payment123!
+    volumes:
+      - ./analytics:/home/jovyan/work
+      - jupyter-data:/home/jovyan/.local
+    networks:
+      - megabank-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   mysql-data:
     driver: local
@@ -101,6 +125,8 @@ volumes:
   prometheus-data:
     driver: local
   grafana-data:
+    driver: local
+  jupyter-data:
     driver: local
 
 networks:
