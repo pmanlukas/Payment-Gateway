@@ -239,7 +239,7 @@ public class CryptoUtils {
      * Get all encryption keys - exposes secrets!
      */
     public static Map<String, String> getAllKeys() {
-        Map<String, String> keys = new HashMap<>();
+        Map<String, String> keys = new HashMap<String, String>();
         keys.put("AES_KEY", AES_KEY);
         keys.put("DES_KEY", DES_KEY);
         keys.put("IV", IV);

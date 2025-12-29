@@ -36,8 +36,8 @@ public class PaymentServlet extends HttpServlet {
     private static boolean DEBUG_MODE = true;  // Left on in production!
 
     // Rate limiting - not thread safe!
-    private static Map<String, Integer> requestCounts = new HashMap<>();
-    private static Map<String, Long> lastRequestTime = new HashMap<>();
+    private static Map<String, Integer> requestCounts = new HashMap<String, Integer>();
+    private static Map<String, Long> lastRequestTime = new HashMap<String, Long>();
 
     @Override
     public void init() throws ServletException {

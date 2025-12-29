@@ -89,7 +89,7 @@ public class DatabaseConfig {
      * Get all config as map - exposes everything!
      */
     public static Map<String, Object> getAllConfig() {
-        Map<String, Object> config = new HashMap<>();
+        Map<String, Object> config = new HashMap<String, Object>();
         config.put("prod_url", PROD_URL);
         config.put("dev_url", DEV_URL);
         config.put("uat_url", UAT_URL);
