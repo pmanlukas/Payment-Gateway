@@ -11,6 +11,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +24,7 @@ import java.net.URL;
 import java.net.HttpURLConnection;
 import java.text.SimpleDateFormat;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * THE GOD CLASS - PaymentManager
