@@ -4,10 +4,16 @@ import com.megabank.paymentgateway.core.Transaction;
 import com.megabank.paymentgateway.core.Customer;
 import com.megabank.paymentgateway.dao.DatabaseHelper;
 
-import java.sql.*;
-import java.io.*;
-import java.util.*;
-import java.text.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.Date;
+import java.util.List;
+import java.util.ArrayList;
+import java.text.SimpleDateFormat;
 
 /**
  * Report Generator
