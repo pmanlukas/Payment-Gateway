@@ -30,7 +30,7 @@ RUN mkdir -p /var/data/megabank/incoming \
              /var/log/megabank
 
 # Copy built artifact from builder stage
-COPY --from=builder /build/target/*.jar /usr/local/tomcat/webapps/payment-gateway.war
+COPY --from=builder /build/target/*.war /usr/local/tomcat/webapps/payment-gateway.war
 
 # Copy configuration files
 COPY src/main/resources/application.properties /usr/local/tomcat/conf/payment-gateway/
