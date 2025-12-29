@@ -24,6 +24,7 @@ This repository has comprehensive documentation:
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Development setup, code style, contribution workflow
 - **[API.md](API.md)** - Complete REST API documentation with examples
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - Deployment procedures, rollback, monitoring
+- **[MONITORING.md](MONITORING.md)** - Monitoring guide, health checks, metrics, alerting
 - **[.github/CI-CD.md](.github/CI-CD.md)** - CI/CD pipeline documentation
 - **[openapi.yaml](openapi.yaml)** - OpenAPI 3.0 specification
 - **[CLAUDE.md](CLAUDE.md)** - This file - Architecture and development guide
@@ -44,7 +45,21 @@ mvn test -Dtest=PaymentManagerTest
 
 **See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development setup instructions.**
 
-### Running the Application
+### Running with Docker (Recommended)
+```bash
+# Quick start - runs entire stack (MySQL, app, Prometheus, Grafana)
+docker-compose up -d
+
+# Or use the quick start script
+./scripts/quick-start.sh
+
+# Access the application
+curl http://localhost:8080/health
+```
+
+**See [docker/README.md](docker/README.md) for Docker setup details.**
+
+### Running the Application (Manual)
 The application is designed to run on Tomcat (servlet container). Deploy the JAR to a servlet container.
 
 **See [DEPLOYMENT.md](DEPLOYMENT.md) for deployment procedures.**

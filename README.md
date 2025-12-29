@@ -24,27 +24,50 @@ The MegaBank Payment Gateway is a "modern" Java-based payment processing system 
 
 ## Quick Start
 
-### Prerequisites
-
-- Java 8+ (code targets Java 6 for... historical reasons)
-- Apache Maven 3.x
-- MySQL 5.5+
-- A strong stomach for legacy code
-
-### Installation
+### Option 1: Docker (Recommended - 5 minutes)
 
 ```bash
 # Clone the repository
 git clone https://github.com/pmanlukas/Payment-Gateway.git
 cd Payment-Gateway
 
+# Start everything with Docker Compose
+docker-compose up -d
+
+# Wait for services to start (~60 seconds)
+# Access at http://localhost:8080
+```
+
+**Or use the quick start script:**
+```bash
+./scripts/quick-start.sh
+```
+
+**Services available:**
+- Payment Gateway API: http://localhost:8080
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3000 (admin/admin123)
+- MySQL: localhost:3306
+
+See [docker/README.md](docker/README.md) for details.
+
+### Option 2: Manual Setup
+
+**Prerequisites:**
+- Java 8+ (code targets Java 6 for... historical reasons)
+- Apache Maven 3.x
+- MySQL 5.5+
+- A strong stomach for legacy code
+
+```bash
 # Setup database
 mysql -u root -p < src/main/resources/schema.sql
 
 # Build
 mvn clean package
 
-# Deploy to Tomcat (or your favorite servlet container from 2005)
+# Deploy to Tomcat
+# (or your favorite servlet container from 2005)
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed setup instructions.
@@ -77,6 +100,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed setup instructions.
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Development setup and guidelines
 - **[API.md](API.md)** - REST API documentation
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - Deployment procedures
+- **[MONITORING.md](MONITORING.md)** - Monitoring and observability guide
 - **[CLAUDE.md](CLAUDE.md)** - Architecture and development guide
 - **[.github/CI-CD.md](.github/CI-CD.md)** - CI/CD pipeline documentation
 

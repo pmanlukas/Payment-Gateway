@@ -578,7 +578,7 @@ axios.post('http://localhost:8080/payments', payment, {
 
 ## OpenAPI/Swagger Specification
 
-For a machine-readable API specification, see the OpenAPI 3.0 spec (coming soon - see issue for contribution opportunity!).
+For a machine-readable API specification, see **[openapi.yaml](openapi.yaml)** - a complete OpenAPI 3.0 specification of all endpoints.
 
 ## Support
 

@@ -1,0 +1,41 @@
+# Prometheus configuration for MegaBank Payment Gateway
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'megabank-payment-gateway'
+    environment: 'docker'
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Payment Gateway application
+  # Note: Application doesn't have /metrics endpoint yet (see monitoring guide)
+  # This is a placeholder for when metrics are implemented
+  - job_name: 'payment-gateway'
+    static_configs:
+      - targets: ['payment-gateway:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    # For now, this will fail until we implement the metrics endpoint
+    # See MONITORING.md for implementation guide
+
+  # MySQL exporter (if added)
+  # - job_name: 'mysql'
+  #   static_configs:
+  #     - targets: ['mysql-exporter:9104']
+
+# Alerting configuration (optional)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: ['alertmanager:9093']
+
+# Rule files (optional)
+# rule_files:
+#   - 'alerts.yml'

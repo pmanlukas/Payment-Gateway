@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:5.7
+    container_name: megabank-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: payments
+      MYSQL_USER: payment_admin
+      MYSQL_PASSWORD: Payment123!
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./docker/init-data.sql:/docker-entrypoint-initdb.d/02-seed-data.sql:ro
+    networks:
+      - megabank-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Payment Gateway Application
+  payment-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: megabank-payment-gateway
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - JAVA_OPTS=-Xms512m -Xmx1024m -Denv=DEV
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=payments
+      - DB_USER=payment_admin
+      - DB_PASSWORD=Payment123!
+    ports:
+      - "8080:8080"
+    volumes:
+      - batch-data:/var/data/megabank
+      - app-logs:/var/log/megabank
+    networks:
+      - megabank-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+  # Prometheus for monitoring (optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: megabank-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - megabank-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    restart: unless-stopped
+
+  # Grafana for visualization (optional)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: megabank-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./docker/grafana-dashboards:/etc/grafana/provisioning/dashboards:ro
+    networks:
+      - megabank-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
+    driver: local
+  batch-data:
+    driver: local
+  app-logs:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+networks:
+  megabank-network:
+    driver: bridge

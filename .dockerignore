@@ -1,0 +1,46 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# CI/CD
+.github
+
+# IDE
+.idea
+.vscode
+*.iml
+.classpath
+.project
+.settings
+
+# Build artifacts
+target/
+*.jar
+*.war
+*.class
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation (not needed in image)
+*.md
+!README.md
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Test data (not needed in image)
+test-data/
+
+# Backup files
+*.bak
+*.backup
+*.old
