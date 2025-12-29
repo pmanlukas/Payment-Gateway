@@ -5,8 +5,9 @@
 # This script sets up and starts the entire application stack using Docker
 #
 # Usage:
-#   ./quick-start.sh           # Build and start services
-#   ./quick-start.sh --prepare # Only download/build (don't start)
+#   ./quick-start.sh            # Build and start services
+#   ./quick-start.sh --prepare  # Only download/build (don't start)
+#   ./quick-start.sh --destroy  # Stop and remove all containers, networks, volumes
 #
 
 set -e  # Exit on error
@@ -20,13 +21,40 @@ NC='\033[0m' # No Color
 
 # Parse arguments
 PREPARE_ONLY=false
-if [[ "$1" == "--prepare" ]] || [[ "$1" == "-p" ]]; then
+DESTROY=false
+
+if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
+    echo ""
+    echo "MegaBank Payment Gateway - Quick Start Script"
+    echo ""
+    echo "Usage:"
+    echo "  ./quick-start.sh           Start the entire application stack"
+    echo "  ./quick-start.sh --prepare Prepare dependencies (download & build only)"
+    echo "  ./quick-start.sh --destroy Completely destroy the environment"
+    echo "  ./quick-start.sh --help    Show this help message"
+    echo ""
+    echo "Options:"
+    echo "  --prepare, -p   Download images and build containers without starting"
+    echo "  --destroy, -d   Stop and remove all containers, volumes, and images"
+    echo "  --help, -h      Display this help message"
+    echo ""
+    echo "Examples:"
+    echo "  ./quick-start.sh           # Normal start"
+    echo "  ./quick-start.sh -p        # Prepare for offline use"
+    echo "  ./quick-start.sh --destroy # Clean up everything"
+    echo ""
+    exit 0
+elif [[ "$1" == "--prepare" ]] || [[ "$1" == "-p" ]]; then
     PREPARE_ONLY=true
+elif [[ "$1" == "--destroy" ]] || [[ "$1" == "--down" ]] || [[ "$1" == "-d" ]]; then
+    DESTROY=true
 fi
 
 echo -e "${BLUE}========================================${NC}"
 if [ "$PREPARE_ONLY" = true ]; then
     echo -e "${BLUE}MegaBank - Prepare Dependencies${NC}"
+elif [ "$DESTROY" = true ]; then
+    echo -e "${BLUE}MegaBank - Destroy Environment${NC}"
 else
     echo -e "${BLUE}MegaBank Payment Gateway - Quick Start${NC}"
 fi
@@ -60,6 +88,45 @@ fi
 
 echo -e "${GREEN}✓ Docker daemon is running${NC}"
 echo ""
+
+# Destroy mode: Stop and remove everything
+if [ "$DESTROY" = true ]; then
+    echo -e "${YELLOW}WARNING: This will completely remove:${NC}"
+    echo -e "  - All containers (payment-gateway, mysql, prometheus, grafana, jupyter)"
+    echo -e "  - All networks created by docker-compose"
+    echo -e "  - All volumes (INCLUDING ALL DATA)"
+    echo -e "  - All built images"
+    echo ""
+    echo -e "${RED}This action cannot be undone!${NC}"
+    echo ""
+    read -p "Are you sure you want to continue? (yes/no): " -r
+    echo ""
+
+    if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]; then
+        echo -e "${BLUE}Destroy cancelled.${NC}"
+        exit 0
+    fi
+
+    echo -e "${BLUE}Stopping and removing containers...${NC}"
+    docker-compose down -v 2>/dev/null || true
+
+    echo -e "${BLUE}Removing built images...${NC}"
+    docker rmi payment-gateway_payment-gateway 2>/dev/null || echo -e "${YELLOW}  (image not found, skipping)${NC}"
+    docker rmi payment-gateway_jupyter 2>/dev/null || echo -e "${YELLOW}  (image not found, skipping)${NC}"
+
+    echo -e "${BLUE}Pruning unused Docker resources...${NC}"
+    docker system prune -f
+
+    echo ""
+    echo -e "${GREEN}========================================${NC}"
+    echo -e "${GREEN}Environment Destroyed Successfully${NC}"
+    echo -e "${GREEN}========================================${NC}"
+    echo ""
+    echo -e "${BLUE}All containers, networks, and volumes have been removed.${NC}"
+    echo -e "${BLUE}To start fresh, run: ./quick-start.sh${NC}"
+    echo ""
+    exit 0
+fi
 
 # Stop any existing containers (unless preparing)
 if [ "$PREPARE_ONLY" = false ]; then
@@ -179,6 +246,9 @@ echo -e "docker-compose logs -f payment-gateway"
 echo ""
 echo -e "${YELLOW}# Stop services${NC}"
 echo -e "docker-compose down"
+echo ""
+echo -e "${YELLOW}# Completely destroy environment (removes all data)${NC}"
+echo -e "./scripts/quick-start.sh --destroy"
 echo ""
 
 echo -e "${GREEN}========================================${NC}"

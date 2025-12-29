@@ -81,13 +81,16 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin123
       - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-piechart-panel
     volumes:
       - grafana-data:/var/lib/grafana
       - ./docker/grafana-dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./docker/grafana-datasources:/etc/grafana/provisioning/datasources:ro
     networks:
       - megabank-network
     depends_on:
       - prometheus
+      - mysql
     restart: unless-stopped
 
   # Jupyter Lab for Data Analytics
