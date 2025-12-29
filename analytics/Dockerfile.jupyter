@@ -16,10 +16,12 @@ USER $NB_UID
 
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-# Create directories for notebooks and data
+# Create directories for notebooks, data, and Jupyter runtime
 RUN mkdir -p /home/jovyan/work/notebooks \
     /home/jovyan/work/data \
-    /home/jovyan/work/scripts
+    /home/jovyan/work/scripts \
+    /home/jovyan/.local/share \
+    /home/jovyan/.jupyter
 
 # Set working directory
 WORKDIR /home/jovyan/work
