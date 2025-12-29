@@ -285,12 +285,21 @@ public class RestApiController extends HttpServlet {
         response.getWriter().write(json.toString());
     }
 
-    private void sendError(HttpServletResponse response, int code, String message) throws Exception {
-        response.setStatus(code);
-        JSONObject json = new JSONObject();
-        json.put("error", true);
-        json.put("code", code);
-        json.put("message", message);  // Could contain sensitive info!
-        response.getWriter().write(json.toString());
+    private void sendError(HttpServletResponse response, int code, String message) {
+        try {
+            response.setStatus(code);
+            JSONObject json = new JSONObject();
+            json.put("error", true);
+            json.put("code", code);
+            json.put("message", message);  // Could contain sensitive info!
+            response.getWriter().write(json.toString());
+        } catch (Exception e) {
+            // Fallback to plain text if JSON fails
+            try {
+                response.getWriter().write("{\"error\":true,\"message\":\"" + message + "\"}");
+            } catch (Exception ex) {
+                // Give up
+            }
+        }
     }
 }
