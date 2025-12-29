@@ -136,7 +136,7 @@ public class RestApiController extends HttpServlet {
         return AuthManager.verifyApiKey(apiKey);
     }
 
-    private void getApiInfo(HttpServletResponse response) throws IOException {
+    private void getApiInfo(HttpServletResponse response) throws Exception {
         JSONObject json = new JSONObject();
         json.put("name", "MegaBank Payment Gateway API");
         json.put("version", API_VERSION);
@@ -147,7 +147,7 @@ public class RestApiController extends HttpServlet {
         response.getWriter().write(json.toString());
     }
 
-    private void getTransaction(String txnId, HttpServletResponse response) throws IOException {
+    private void getTransaction(String txnId, HttpServletResponse response) throws Exception {
         // No authorization check - anyone can view any transaction!
         System.out.println("Fetching transaction: " + txnId);
 
@@ -161,7 +161,7 @@ public class RestApiController extends HttpServlet {
     }
 
     private void getAllTransactions(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
+            throws Exception {
         // Returns ALL transactions - no pagination initially!
         // Added limit after production incident
         String limitStr = request.getParameter("limit");
@@ -182,7 +182,7 @@ public class RestApiController extends HttpServlet {
         response.getWriter().write(json.toString());
     }
 
-    private void getCustomer(String customerId, HttpServletResponse response) throws IOException {
+    private void getCustomer(String customerId, HttpServletResponse response) throws Exception {
         // Returns customer with all sensitive data!
         PaymentManager pm = PaymentManager.getInstance();
         Customer customer = pm.getCustomer(customerId);
@@ -201,7 +201,7 @@ public class RestApiController extends HttpServlet {
         response.getWriter().write(json.toString());
     }
 
-    private void processPayment(String body, HttpServletResponse response) throws IOException {
+    private void processPayment(String body, HttpServletResponse response) throws Exception {
         JSONObject request = new JSONObject(body);
 
         // Extract payment details - no validation!
@@ -230,7 +230,7 @@ public class RestApiController extends HttpServlet {
         response.getWriter().write(result.toString());
     }
 
-    private void processRefund(String body, HttpServletResponse response) throws IOException {
+    private void processRefund(String body, HttpServletResponse response) throws Exception {
         JSONObject request = new JSONObject(body);
 
         // No authentication for refund!
@@ -247,7 +247,7 @@ public class RestApiController extends HttpServlet {
         response.getWriter().write(result.toString());
     }
 
-    private void createCustomer(String body, HttpServletResponse response) throws IOException {
+    private void createCustomer(String body, HttpServletResponse response) throws Exception {
         JSONObject request = new JSONObject(body);
 
         // Log all customer data including password!
@@ -262,7 +262,7 @@ public class RestApiController extends HttpServlet {
         response.getWriter().write(result.toString());
     }
 
-    private void getDebugInfo(HttpServletResponse response) throws IOException {
+    private void getDebugInfo(HttpServletResponse response) throws Exception {
         // Debug endpoint exposed in production!
         JSONObject json = new JSONObject();
         json.put("api_keys", VALID_API_KEYS);  // Exposing API keys!
@@ -273,7 +273,7 @@ public class RestApiController extends HttpServlet {
         response.getWriter().write(json.toString());
     }
 
-    private void getHealth(HttpServletResponse response) throws IOException {
+    private void getHealth(HttpServletResponse response) throws Exception {
         JSONObject json = new JSONObject();
         json.put("status", "healthy");
         json.put("timestamp", System.currentTimeMillis());
@@ -285,7 +285,7 @@ public class RestApiController extends HttpServlet {
         response.getWriter().write(json.toString());
     }
 
-    private void sendError(HttpServletResponse response, int code, String message) throws IOException {
+    private void sendError(HttpServletResponse response, int code, String message) throws Exception {
         response.setStatus(code);
         JSONObject json = new JSONObject();
         json.put("error", true);
