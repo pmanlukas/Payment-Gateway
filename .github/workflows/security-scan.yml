@@ -182,6 +182,7 @@ jobs:
   codeql-analysis:
     name: CodeQL Security Analysis
     runs-on: ubuntu-latest
+    continue-on-error: true  # Don't fail workflow if code scanning is not enabled
     permissions:
       actions: read
       contents: read
@@ -209,5 +210,6 @@ jobs:
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
+      continue-on-error: true  # Continue if code scanning is not enabled
       with:
         category: "/language:java"
