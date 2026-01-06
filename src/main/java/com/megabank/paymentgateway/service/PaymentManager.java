@@ -417,16 +417,35 @@ public class PaymentManager {
         return null;
     }
 
-    // Search customers - SQL Injection with LIKE
+    // Search customers - Fixed SQL Injection vulnerability
     public List searchCustomers(String searchTerm) {
         List results = new ArrayList();
+
+        // Input validation
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            return results;
+        }
+
+        // Sanitize input - limit length to prevent abuse
+        searchTerm = searchTerm.trim();
+        if (searchTerm.length() > 100) {
+            searchTerm = searchTerm.substring(0, 100);
+        }
+
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            Statement stmt = dbConnection.createStatement();
-            // SQL Injection with LIKE clause!
-            String sql = "SELECT * FROM customers WHERE first_name LIKE '%" + searchTerm +
-                        "%' OR last_name LIKE '%" + searchTerm +
-                        "%' OR email LIKE '%" + searchTerm + "%'";
-            ResultSet rs = stmt.executeQuery(sql);
+            // Use PreparedStatement to prevent SQL injection
+            String sql = "SELECT * FROM customers WHERE first_name LIKE ? OR last_name LIKE ? OR email LIKE ?";
+            pstmt = dbConnection.prepareStatement(sql);
+
+            // Add wildcards to the search term for LIKE pattern
+            String searchPattern = "%" + searchTerm + "%";
+            pstmt.setString(1, searchPattern);
+            pstmt.setString(2, searchPattern);
+            pstmt.setString(3, searchPattern);
+
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 Customer c = new Customer();
                 c.customerId = rs.getString("customer_id");
@@ -437,7 +456,20 @@ public class PaymentManager {
                 results.add(c);
             }
         } catch (SQLException e) {
-            // Ignored
+            // Log error
+            e.printStackTrace();
+        } finally {
+            // Clean up resources (Java 1.6 compatible - no try-with-resources)
+            try {
+                if (rs != null) rs.close();
+            } catch (SQLException e) {
+                // Ignored
+            }
+            try {
+                if (pstmt != null) pstmt.close();
+            } catch (SQLException e) {
+                // Ignored
+            }
         }
         return results;
     }
