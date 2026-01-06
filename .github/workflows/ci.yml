@@ -5,6 +5,7 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
+  workflow_dispatch:  # Allow manual trigger
 
 jobs:
   build:
@@ -41,11 +42,13 @@ jobs:
     - name: Generate test report
       if: always()
       uses: dorny/test-reporter@v1
+      continue-on-error: true  # Don't fail if no test reports exist
       with:
         name: Maven Tests
         path: target/surefire-reports/*.xml
         reporter: java-junit
         fail-on-error: false
+        fail-on-empty: false
 
     - name: Package application
       run: mvn package -DskipTests -B
