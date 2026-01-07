@@ -22,7 +22,7 @@ public class CryptoUtilsTest {
         String encrypted = CryptoUtils.encryptDES(plaintext);
 
         // Verify it's different from plaintext
-        assertNotEquals(plaintext, encrypted);
+        assertFalse(plaintext.equals(encrypted));
 
         // Verify decryption works
         String decrypted = CryptoUtils.decryptDES(encrypted);
@@ -87,7 +87,7 @@ public class CryptoUtilsTest {
         String hash2 = CryptoUtils.hashWithSalt(password2);
 
         // Different passwords should have different hashes
-        assertNotEquals(hash1, hash2);
+        assertFalse(hash1.equals(hash2));
 
         // Bug: Same password always produces same hash (global salt!)
         assertEquals(hash1, CryptoUtils.hashWithSalt(password1));
@@ -102,7 +102,7 @@ public class CryptoUtilsTest {
         String obfuscated = CryptoUtils.xorObfuscate(input);
 
         // Verify it's different
-        assertNotEquals(input, obfuscated);
+        assertFalse(input.equals(obfuscated));
 
         // Bug: XOR is trivially reversible!
     }

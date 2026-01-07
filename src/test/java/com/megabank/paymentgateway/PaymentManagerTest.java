@@ -154,7 +154,7 @@ public class PaymentManagerTest {
         String hash = paymentManager.hashPassword(password);
 
         // Checks hash is not same as password
-        assertNotEquals(password, hash);
+        assertFalse(password.equals(hash));
 
         // Bug: Should verify same password produces same hash
         // Bug: Doesn't test salt
