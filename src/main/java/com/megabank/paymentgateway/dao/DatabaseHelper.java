@@ -118,6 +118,24 @@ public class DatabaseHelper {
         return executeQuery(sql);
     }
 
+    // Secure version - Find by ID using PreparedStatement
+    public static ResultSet findByIdSecure(String table, String id) throws SQLException {
+        String sql = "SELECT * FROM " + table + " WHERE id = ?";
+        PreparedStatement pstmt = getConnection().prepareStatement(sql);
+        pstmt.setString(1, id);
+        return pstmt.executeQuery();
+    }
+
+    // Secure version - Find by criteria using PreparedStatement
+    public static ResultSet findByCriteriaSecure(String table, String field, String value) throws SQLException {
+        // Note: Cannot parameterize column names, only values
+        // Field name should be validated against whitelist in calling code
+        String sql = "SELECT * FROM " + table + " WHERE " + field + " = ?";
+        PreparedStatement pstmt = getConnection().prepareStatement(sql);
+        pstmt.setString(1, value);
+        return pstmt.executeQuery();
+    }
+
     // Delete record - SQL Injection
     public static int deleteRecord(String table, String id) throws SQLException {
         // SQL Injection vulnerability!
