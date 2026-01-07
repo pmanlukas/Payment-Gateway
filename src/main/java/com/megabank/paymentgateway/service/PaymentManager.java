@@ -417,16 +417,37 @@ public class PaymentManager {
         return null;
     }
 
-    // Search customers - SQL Injection with LIKE
+    // Search customers - Fixed SQL injection vulnerability (Issue #7)
     public List searchCustomers(String searchTerm) {
         List results = new ArrayList();
+
+        // Input validation - prevent null and empty searches
+        if (searchTerm == null || searchTerm.trim().length() == 0) {
+            return results;
+        }
+
+        // Sanitize search term - limit length to prevent resource exhaustion
+        searchTerm = searchTerm.trim();
+        if (searchTerm.length() > 100) {
+            searchTerm = searchTerm.substring(0, 100);
+        }
+
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            Statement stmt = dbConnection.createStatement();
-            // SQL Injection with LIKE clause!
-            String sql = "SELECT * FROM customers WHERE first_name LIKE '%" + searchTerm +
-                        "%' OR last_name LIKE '%" + searchTerm +
-                        "%' OR email LIKE '%" + searchTerm + "%'";
-            ResultSet rs = stmt.executeQuery(sql);
+            // Use PreparedStatement with parameterized queries to prevent SQL injection
+            String sql = "SELECT * FROM customers WHERE first_name LIKE ? " +
+                        "OR last_name LIKE ? " +
+                        "OR email LIKE ?";
+            pstmt = dbConnection.prepareStatement(sql);
+
+            // Set parameters with wildcards for LIKE queries
+            String searchPattern = "%" + searchTerm + "%";
+            pstmt.setString(1, searchPattern);
+            pstmt.setString(2, searchPattern);
+            pstmt.setString(3, searchPattern);
+
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 Customer c = new Customer();
                 c.customerId = rs.getString("customer_id");
@@ -437,7 +458,15 @@ public class PaymentManager {
                 results.add(c);
             }
         } catch (SQLException e) {
-            // Ignored
+            e.printStackTrace();
+        } finally {
+            // Clean up resources
+            try {
+                if (rs != null) rs.close();
+                if (pstmt != null) pstmt.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
         return results;
     }
