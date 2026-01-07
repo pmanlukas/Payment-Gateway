@@ -417,16 +417,39 @@ public class PaymentManager {
         return null;
     }
 
-    // Search customers - SQL Injection with LIKE
+    // Search customers - Secured with PreparedStatement
     public List searchCustomers(String searchTerm) {
         List results = new ArrayList();
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        // Input validation
+        if (searchTerm == null) {
+            return results;
+        }
+
+        // Sanitize input - limit length and remove potentially dangerous characters
+        searchTerm = searchTerm.trim();
+        if (searchTerm.length() == 0) {
+            return results;
+        }
+        if (searchTerm.length() > 100) {
+            searchTerm = searchTerm.substring(0, 100);
+        }
+
         try {
-            Statement stmt = dbConnection.createStatement();
-            // SQL Injection with LIKE clause!
-            String sql = "SELECT * FROM customers WHERE first_name LIKE '%" + searchTerm +
-                        "%' OR last_name LIKE '%" + searchTerm +
-                        "%' OR email LIKE '%" + searchTerm + "%'";
-            ResultSet rs = stmt.executeQuery(sql);
+            // Use PreparedStatement to prevent SQL injection
+            String sql = "SELECT * FROM customers WHERE first_name LIKE ? " +
+                        "OR last_name LIKE ? OR email LIKE ?";
+            pstmt = dbConnection.prepareStatement(sql);
+
+            // Set parameters with wildcards for LIKE clause
+            String searchPattern = "%" + searchTerm + "%";
+            pstmt.setString(1, searchPattern);
+            pstmt.setString(2, searchPattern);
+            pstmt.setString(3, searchPattern);
+
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 Customer c = new Customer();
                 c.customerId = rs.getString("customer_id");
@@ -437,7 +460,20 @@ public class PaymentManager {
                 results.add(c);
             }
         } catch (SQLException e) {
-            // Ignored
+            System.err.println("Error searching customers: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            // Clean up resources properly
+            try {
+                if (rs != null) rs.close();
+            } catch (SQLException e) {
+                System.err.println("Error closing ResultSet: " + e.getMessage());
+            }
+            try {
+                if (pstmt != null) pstmt.close();
+            } catch (SQLException e) {
+                System.err.println("Error closing PreparedStatement: " + e.getMessage());
+            }
         }
         return results;
     }
