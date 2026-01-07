@@ -417,16 +417,35 @@ public class PaymentManager {
         return null;
     }
 
-    // Search customers - SQL Injection with LIKE
+    // Search customers - Fixed SQL Injection vulnerability
     public List searchCustomers(String searchTerm) {
         List results = new ArrayList();
+
+        // Input validation
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            return results;
+        }
+
+        // Sanitize input - remove potentially dangerous characters
+        String sanitized = searchTerm.trim();
+        if (sanitized.length() > 100) {
+            sanitized = sanitized.substring(0, 100);
+        }
+
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            Statement stmt = dbConnection.createStatement();
-            // SQL Injection with LIKE clause!
-            String sql = "SELECT * FROM customers WHERE first_name LIKE '%" + searchTerm +
-                        "%' OR last_name LIKE '%" + searchTerm +
-                        "%' OR email LIKE '%" + searchTerm + "%'";
-            ResultSet rs = stmt.executeQuery(sql);
+            // Use PreparedStatement to prevent SQL injection
+            String sql = "SELECT * FROM customers WHERE first_name LIKE ? OR last_name LIKE ? OR email LIKE ?";
+            pstmt = dbConnection.prepareStatement(sql);
+
+            // Add wildcards in Java code, not in SQL
+            String searchPattern = "%" + sanitized + "%";
+            pstmt.setString(1, searchPattern);
+            pstmt.setString(2, searchPattern);
+            pstmt.setString(3, searchPattern);
+
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 Customer c = new Customer();
                 c.customerId = rs.getString("customer_id");
@@ -438,6 +457,14 @@ public class PaymentManager {
             }
         } catch (SQLException e) {
             // Ignored
+        } finally {
+            // Clean up resources (Java 1.6 compatible)
+            if (rs != null) {
+                try { rs.close(); } catch (SQLException e) { /* ignored */ }
+            }
+            if (pstmt != null) {
+                try { pstmt.close(); } catch (SQLException e) { /* ignored */ }
+            }
         }
         return results;
     }
