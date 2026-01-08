@@ -41,7 +41,7 @@ jobs:
 
     - name: Generate test report
       if: always()
-      uses: dorny/test-reporter@v1
+      uses: dorny/test-reporter@v2
       continue-on-error: true  # Don't fail if no test reports exist
       with:
         name: Maven Tests
